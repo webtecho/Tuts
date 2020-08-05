@@ -1,0 +1,93 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.util.Scanner;
+
+public class StoreFileInDB 
+{
+ public static void main(String[] args) 
+ {
+  try
+  {
+  // create object of scanner to take input from keyboard
+  Scanner sc = new Scanner(System.in);
+  
+  System.out.print("Enter the file path to be stored in database: ");
+
+  // here we will take path of file that need to be stored inside the database
+  String filepath = sc.nextLine();
+
+  // create object of file class to denote this path
+  File file = new File(filepath);
+   
+  // check if path of file exists and path also belongs to 
+  // a file rather than a directory  
+  if(file.exists() && file.isFile())
+  {
+   // get the name of file
+   String filename = file.getName();
+   
+   // get the size of file
+   long filesize = file.length();
+   
+   // get last index of . (that is dot) in file name
+   int index = filename.lastIndexOf(".");
+   
+   // get a substring from the given index plus 1
+   // using this approach we can extract the extension from the filename 
+   String ext = filename.substring(index + 1);
+
+   // now open a a file in read mode
+   // means now we can fetch the data from this file
+   FileInputStream fi = new FileInputStream(filepath);
+   
+   // load the driver class for database connection
+   Class.forName("com.mysql.jdbc.Driver");
+   
+   // get object of connection
+   Connection co = DriverManager.getConnection
+     ("jdbc:mysql://localhost:3306/files_db","root","root");
+   
+   // get object of PreparedStatement, to execute
+   // sql statements
+   PreparedStatement ps = co.prepareStatement
+   ("insert into files_table values(?,?,?,?)");
+   
+   // provide values in place of ? mark   
+   // set the file name to be stored inside database
+   ps.setString(1, filename); 
+
+   // set the file size to be stored inside database
+   ps.setLong(2, filesize);
+   
+   // set the file extension to be stored inside database
+   ps.setString(3, ext);
+
+   // set the actual data of file to be stored inside database
+   ps.setBinaryStream(4, fi,(int)filesize);
+   
+   // execute sql statement
+   ps.executeUpdate();
+
+   // show a message on screen
+   System.out.println("File has been saved inside the database");
+   
+   // close the database connection
+   co.close();
+  }
+  else
+  {
+   System.out.println("Either file not exits or its is a folder");
+  }
+  
+  }
+  // handle runtime error, generated during the program execution
+  catch (Exception e) 
+  {
+   System.out.println("error "+e);
+  }
+ 
+ }
+} 
